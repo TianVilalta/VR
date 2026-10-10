@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Roquet AR - Multi-Room Gallery</title>
+<style>
+  html, body {
+    margin: 0; padding: 0;
+    width: 100%; height: 100%;
+    overflow: hidden;
+    background: #000;
+    font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    color: white;
+  }
+  #overlay {
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    text-align: center;
+    padding: 20px;
+    pointer-events: none;
+    color: #fff;
+    z-index: 10;
+  }
+  #status { margin-top: 10px; font-size: 14px; color: #ccc; }
+  #controllerInfo {
+    position: absolute;
+    top: 10px; left: 10px;
+    font-size: 12px;
+    line-height: 1.6;
+    background: rgba(0,0,0,0.75);
+    padding: 8px 14px;
+    border-radius: 8px;
+    pointer-events: none;
+    white-space: pre;
+    z-index: 10;
+    border: 1px solid rgba(255,255,255,0.1);
+  }
+  canvas { display: block; }
+</style>
+</head>
+<body>
+<div id="overlay">
+  <h2>Grup ROQUET AR — Quest 3</h2>
+  <div id="status">Carregant...</div>
+</div>
+<div id="controllerInfo">Mandos: esperant sessió AR...</div>
+
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+    "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+  }
+}
+</script>
+
+<script type="module">
+import * as THREE from 'three';
+import { ARButton } from 'three/addons/webxr/ARButton.js';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+
+// ─── ESTATS DE NAVEGACIÓ ──────────────────────────────────────────────
+let state = 'mainHub';  
+let currentSelectedCompany = null; 
+
+const buttonStates = {};
+const roomLabels = [];
+
+const _fwd = new THREE.Vector3();
+const _cam = new THREE.Vector3();
+const _to  = new THREE.Vector3();
+const _camPos2D = new THREE.Vector3();
+const _itemWorldPos = new THREE.Vector3();
+
+// Cache de textures optimitzat
+const textureCache = new Map();
+
+// ─── RENDERITZADOR I ESCENA ───────────────────────────────────────────
+const renderer = new THREE.WebGLRenderer({ 
+  antialias: true, 
+  alpha: true,
+  powerPreference: "high-performance" 
+});
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.1;
+renderer.xr.enabled = true;
+renderer.xr.setReferenceSpaceType('local-floor');
+
+const scene = new THREE.Scene();
+scene.background = null;
+
+const cameraGroup = new THREE.Group();
+scene.add(cameraGroup);
+
+const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.01, 300);
+cameraGroup.add(camera);
+
+const pmremGenerator = new THREE.PMREMGenerator(renderer);
+scene.environment = pmremGenerator.fromScene(new RoomEnvironment(), 0.04).texture;
+
+let headsetVisibilityHandlerAttached = false;
+let pendingHubRecenter = false;
+
+function recenterVR() {
+  recenterMainHubAroundUser();
+  const session = renderer.xr.getSession();
+  if (session) {
+    session.requestReferenceSpace('local-floor').then((refSpace) => {
+      renderer.xr.setReferenceSpace(refSpace);
+    }).catch(() => {});
+  }
+}
+
+renderer.xr.addEventListener('sessionstart', () => {
+  resetToMainHub();
+  attachHeadsetVisibilityHandler();
+});
+renderer.xr.addEventListener('sessionend', () => {
+  resetToMainHub();
+  detachHeadsetVisibilityHandler();
+});
+document.body.appendChild(renderer.domElement);
+
+function resetToMainHub() {
+  exitToMainHub();
+  recenterVR();
+  pendingHubRecenter = true;
+}
+
+function markHeadsetOffOrPaused() {
+  resetToMainHub();
+}
+
+function onHeadsetVisibilityChange(event) {
+  const st = event?.session?.visibilityState || renderer.xr.getSession()?.visibilityState;
+  if (st === 'hidden' || st === 'visible' || st === 'visible-blurred') {
+    markHeadsetOffOrPaused();
+  }
+}
+
+function onDocumentVisibilityChange() {
+  if (document.visibilityState === 'visible' || document.visibilityState === 'hidden') {
+    markHeadsetOffOrPaused();
+  }
+}
+
+function attachHeadsetVisibilityHandler() {
+  const session = renderer.xr.getSession();
+  if (!session || headsetVisibilityHandlerAttached) return;
+  session.addEventListener('visibilitychange', onHeadsetVisibilityChange);
+  document.addEventListener('visibilitychange', onDocumentVisibilityChange);
+  headsetVisibilityHandlerAttached = true;
+}
+
+function detachHeadsetVisibilityHandler() {
+  const session = renderer.xr.getSession();
+  if (session) {
+    session.removeEventListener('visibilitychange', onHeadsetVisibilityChange);
+  }
+  document.removeEventListener('visibilitychange', onDocumentVisibilityChange);
+  headsetVisibilityHandlerAttached = false;
+}
+
+const hemiLight = new THREE.HemisphereLight(0xffffff, 0x444444, 1.2);
+scene.add(hemiLight);
+
+const dirLight1 = new THREE.DirectionalLight(0xffffff, 1.0);
+dirLight1.position.set(5, 12, 6);
+scene.add(dirLight1);
+
+const dirLight2 = new THREE.DirectionalLight(0xffffff, 0.6);
+dirLight2.position.set(-5, 8, -6);
+scene.add(dirLight2);
+
+const ambient = new THREE.AmbientLight(0xffffff, 0.5);
+scene.add(ambient);
+
+// ─── DADES DE LES SECCIONS I IMATGES (RUTES ACTUALITZADES) ───────────
+const hubItems = [
+  { label: 'Amèrica', img: './Fotos/logos/america.png', id: 'america' },
+  { label: 'Pedro', img: './Fotos/logos/pedro.png', id: 'pedro' },
+  { label: 'Eastern', img: './Fotos/logos/eastern.png', id: 'eastern' },
+  { label: 'Dinacil', img: './Fotos/logos/dinacil.png', id: 'dinacil' },
+  { label: 'Fundiciones', img: './Fotos/logos/fundiciones.png', id: 'fundiciones' },
+  { label: 'Tekor', img: './Fotos/logos/tekor.png', id: 'tekor' }
+];
+
+const companyGalleries = {
+  dinacil: {
+    Edifici: [
+      './Fotos/Dinacil/DEdifici1.jpg', './Fotos/Dinacil/DEdifici2.jpg', './Fotos/Dinacil/DEdifici3.jpg', './Fotos/Dinacil/DEdifici4.JPG',
+      './Fotos/Dinacil/DEdifici5.JPG', './Fotos/Dinacil/DEdifici6.JPG', './Fotos/Dinacil/DEdifici7.JPG', './Fotos/Dinacil/DEdifici8.JPG',
+      './Fotos/Dinacil/DEdifici9.JPG', './Fotos/Dinacil/DEdifici10.JPG', './Fotos/Dinacil/DEdifici11.JPG', './Fotos/Dinacil/DEdifici12.JPG',
+      './Fotos/Dinacil/DEdifici13.jpg', './Fotos/Dinacil/DEdifici14.jpg', './Fotos/Dinacil/DEdifici15.tif'
+    ],
+    Instalacions:
