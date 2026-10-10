@@ -36,13 +36,29 @@
     z-index: 10;
     border: 1px solid rgba(255,255,255,0.1);
   }
+  /* Estil personalitzat pel botó d'AR de Three.js */
+  #ARButton {
+    position: absolute !important;
+    bottom: 20px !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    background-color: #f4a261 !important;
+    border: 2px solid #fff !important;
+    border-radius: 12px !important;
+    color: #000 !important;
+    font: bold 16px 'Segoe UI', sans-serif !important;
+    padding: 14px 28px !important;
+    cursor: pointer !important;
+    z-index: 999 !important;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.5) !important;
+  }
   canvas { display: block; }
 </style>
 </head>
 <body>
 <div id="overlay">
   <h2>Grup ROQUET AR — Quest 3</h2>
-  <div id="status">Carregant...</div>
+  <div id="status">Iniciant aplicació...</div>
 </div>
 <div id="controllerInfo">Mandos: esperant sessió AR...</div>
 
@@ -60,7 +76,6 @@ import * as THREE from 'three';
 import { ARButton } from 'three/addons/webxr/ARButton.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 
-// ─── ESTATS DE NAVEGACIÓ ──────────────────────────────────────────────
 let state = 'mainHub';  
 let currentSelectedCompany = null; 
 
@@ -73,10 +88,8 @@ const _to  = new THREE.Vector3();
 const _camPos2D = new THREE.Vector3();
 const _itemWorldPos = new THREE.Vector3();
 
-// Cache de textures optimitzat
 const textureCache = new Map();
 
-// ─── RENDERITZADOR I ESCENA ───────────────────────────────────────────
 const renderer = new THREE.WebGLRenderer({ 
   antialias: true, 
   alpha: true,
@@ -179,7 +192,7 @@ scene.add(dirLight2);
 const ambient = new THREE.AmbientLight(0xffffff, 0.5);
 scene.add(ambient);
 
-// ─── DADES DE LES SECCIONS I IMATGES (RUTES ACTUALITZADES) ───────────
+// ─── DADES DE LES SECCIONS I IMATGES ───────────
 const hubItems = [
   { label: 'Amèrica', img: './Fotos/logos/america.png', id: 'america' },
   { label: 'Pedro', img: './Fotos/logos/pedro.png', id: 'pedro' },
@@ -197,4 +210,627 @@ const companyGalleries = {
       './Fotos/Dinacil/DEdifici9.JPG', './Fotos/Dinacil/DEdifici10.JPG', './Fotos/Dinacil/DEdifici11.JPG', './Fotos/Dinacil/DEdifici12.JPG',
       './Fotos/Dinacil/DEdifici13.jpg', './Fotos/Dinacil/DEdifici14.jpg', './Fotos/Dinacil/DEdifici15.tif'
     ],
-    Instalacions:
+    Instalacions: [
+      './Fotos/Dinacil/DInstalacions1.jpg', './Fotos/Dinacil/DInstalacions2.jpg', './Fotos/Dinacil/DInstalacions3.jpg', './Fotos/Dinacil/DInstalacions4.jpg',
+      './Fotos/Dinacil/DInstalacions5.jpg', './Fotos/Dinacil/DInstalacions6.jpg', './Fotos/Dinacil/DInstalacions7.jpg', './Fotos/Dinacil/DInstalacions8.jpg',
+      './Fotos/Dinacil/DInstalacions9.jpg', './Fotos/Dinacil/DInstalacions10.jpg', './Fotos/Dinacil/DInstalacions11.jpg', './Fotos/Dinacil/DInstalacions12.jpg',
+      './Fotos/Dinacil/DInstalacions13.jpg', './Fotos/Dinacil/DInstalacions14.jpg', './Fotos/Dinacil/DInstalacions15.jpg', './Fotos/Dinacil/DInstalacions16.jpg',
+      './Fotos/Dinacil/DInstalacions17.jpg', './Fotos/Dinacil/DInstalacions18.jpg', './Fotos/Dinacil/DInstalacions19.jpg', './Fotos/Dinacil/DInstalacions20.jpg',
+      './Fotos/Dinacil/DInstalacions21.jpg'
+    ],
+    Producte: [
+      './Fotos/Dinacil/DProducte1.png', './Fotos/Dinacil/DProducte2.png', './Fotos/Dinacil/DProducte3.png', './Fotos/Dinacil/DProducte4.png',
+      './Fotos/Dinacil/DProducte5.png', './Fotos/Dinacil/DProducte6.jpg', './Fotos/Dinacil/DProducte7.jpg', './Fotos/Dinacil/DProducte8.jpg', './Fotos/Dinacil/DProducte9.jpg'
+    ]
+  },
+  fundiciones: {
+    Edifici: [
+      './Fotos/Fundicio/FEdifici1.jpg', './Fotos/Fundicio/FEdifici2.jpg', './Fotos/Fundicio/FEdifici3.jpg', './Fotos/Fundicio/FEdifici4.jpg',
+      './Fotos/Fundicio/FEdifici5.jpg', './Fotos/Fundicio/FEdifici6.jpg', './Fotos/Fundicio/FEdifici7.jpg'
+    ],
+    Instalacions: [
+      './Fotos/Fundicio/FInstalacions1.jpg', './Fotos/Fundicio/FInstalacions2.jpg', './Fotos/Fundicio/FInstalacions3.jpg', './Fotos/Fundicio/FInstalacions4.jpg',
+      './Fotos/Fundicio/FInstalacions5.jpg', './Fotos/Fundicio/FInstalacions6.jpg', './Fotos/Fundicio/FInstalacions7.jpg', './Fotos/Fundicio/FInstalacions8.jpg',
+      './Fotos/Fundicio/FInstalacions9.jpg', './Fotos/Fundicio/FInstalacions10.jpg', './Fotos/Fundicio/FInstalacions11.jpg', './Fotos/Fundicio/FInstalacions12.jpg',
+      './Fotos/Fundicio/FInstalacions13.jpg', './Fotos/Fundicio/FInstalacions14.jpg', './Fotos/Fundicio/FInstalacions15.jpg', './Fotos/Fundicio/FInstalacions16.jpg',
+      './Fotos/Fundicio/FInstalacions17.jpg', './Fotos/Fundicio/FInstalacions18.jpg'
+    ],
+    Producte: [
+      './Fotos/Fundicio/FProducte1.jpg', './Fotos/Fundicio/FProducte2.jpg', './Fotos/Fundicio/FProducte3.jpg', './Fotos/Fundicio/FProducte4.jpg',
+      './Fotos/Fundicio/FProducte5.jpg', './Fotos/Fundicio/FProducte6.jpg', './Fotos/Fundicio/FProducte7.jpg', './Fotos/Fundicio/FProducte8.jpg', './Fotos/Fundicio/FProducte9.jpg'
+    ]
+  },
+  pedro: {
+    Edifici: [
+      './Fotos/Pedro/PEdifici1.jpg', './Fotos/Pedro/PEdifici2.JPG', './Fotos/Pedro/PEdifici3.JPG', './Fotos/Pedro/PEdifici4.jpg',
+      './Fotos/Pedro/PEdifici5.jpg', './Fotos/Pedro/PEdifici6.jpg', './Fotos/Pedro/PEdifici7.jpg', './Fotos/Pedro/PEdifici8.jpg',
+      './Fotos/Pedro/PEdifici10.JPG', './Fotos/Pedro/PEdifici11.jpg', './Fotos/Pedro/PEdifici12.jpg',
+      './Fotos/Pedro/PEdifici13.jpg', './Fotos/Pedro/PEdifici14.jpg', './Fotos/Pedro/PEdifici15.jpg', './Fotos/Pedro/PEdifici16.jpg'
+    ],
+    Instalacions: [
+      './Fotos/Pedro/PInstalacions1.jpg', './Fotos/Pedro/PInstalacions2.jpg', './Fotos/Pedro/PInstalacions3.jpg', './Fotos/Pedro/PInstalacions4.jpg',
+      './Fotos/Pedro/PInstalacions5.jpg', './Fotos/Pedro/PInstalacions6.jpg', './Fotos/Pedro/PInstalacions7.jpg', './Fotos/Pedro/PInstalacions8.jpg',
+      './Fotos/Pedro/PInstalacions9.jpg', './Fotos/Pedro/PInstalacions10.jpg', './Fotos/Pedro/PInstalacions11.jpg', './Fotos/Pedro/PInstalacions12.jpg',
+      './Fotos/Pedro/PInstalacions13.jpg', './Fotos/Pedro/PInstalacions14.jpg', './Fotos/Pedro/PInstalacions15.jpg', './Fotos/Pedro/PInstalacions16.jpg',
+      './Fotos/Pedro/PInstalacions17.jpg', './Fotos/Pedro/PInstalacions18.jpg', './Fotos/Pedro/PInstalacions19.jpg', './Fotos/Pedro/PInstalacions20.jpg'
+    ],
+    Producte: [
+      './Fotos/Pedro/PProducte1.jpg', './Fotos/Pedro/PProducte2.jpg', './Fotos/Pedro/PProducte3.jpg', './Fotos/Pedro/PProducte4.jpg',
+      './Fotos/Pedro/PProducte5.jpg', './Fotos/Pedro/PProducte6.jpg', './Fotos/Pedro/PProducte7.jpg', './Fotos/Pedro/PProducte8.jpg',
+      './Fotos/Pedro/PProducte9.jpg', './Fotos/Pedro/PProducte10.jpg', './Fotos/Pedro/PProducte11.jpg', './Fotos/Pedro/PProducte12.jpg',
+      './Fotos/Pedro/PProducte13.jpg', './Fotos/Pedro/PProducte14.jpg', './Fotos/Pedro/PProducte15.jpg', './Fotos/Pedro/PProducte16.jpg',
+      './Fotos/Pedro/PProducte17.jpg'
+    ]
+  },
+  america: {
+    Edifici: [
+      './Fotos/America/A1.jpeg', './Fotos/America/A2.jpeg', './Fotos/America/A3.jpeg', './Fotos/America/A4.jpeg',
+      './Fotos/America/A5.jpeg', './Fotos/America/A6.jpg', './Fotos/America/A7.JPG', './Fotos/America/A8.JPG',
+      './Fotos/America/A9.JPG', './Fotos/America/A10.JPG', './Fotos/America/A11.JPG', './Fotos/America/A12.JPG',
+      './Fotos/America/A13.JPG', './Fotos/America/A14.png'
+    ],
+    Instalacions: ['./Fotos/America/A1.jpeg'],
+    Producte: ['./Fotos/America/A2.jpeg']
+  },
+  eastern: {
+    Edifici: [
+      './Fotos/Eastern/EEdifici1.jpg', './Fotos/Eastern/EEdifici2.jpg', './Fotos/Eastern/EEdifici3.jpg', './Fotos/Eastern/EEdifici4.jpg',
+      './Fotos/Eastern/EEdifici5.jpg', './Fotos/Eastern/EEdifici6.jpg', './Fotos/Eastern/EEdifici7.jpg'
+    ],
+    Instalacions: [
+      './Fotos/Eastern/EInstalacions1.jpg', './Fotos/Eastern/EInstalacions2.jpg', './Fotos/Eastern/EInstalacions3.jpg', './Fotos/Eastern/EInstalacions4.jpg',
+      './Fotos/Eastern/EInstalacions5.jpg', './Fotos/Eastern/EInstalacions6.jpg', './Fotos/Eastern/EInstalacions7.jpg', './Fotos/Eastern/EInstalacions8.jpg',
+      './Fotos/Eastern/EInstalacions9.jpg', './Fotos/Eastern/EInstalacions10.jpg', './Fotos/Eastern/EInstalacions11.jpg', './Fotos/Eastern/EInstalacions12.jpg',
+      './Fotos/Eastern/EInstalacions13.jpg', './Fotos/Eastern/EInstalacions14.jpg', './Fotos/Eastern/EInstalacions15.jpg', './Fotos/Eastern/EInstalacions16.jpg',
+      './Fotos/Eastern/EInstalacions17.jpg'
+    ],
+    Producte: [
+      './Fotos/Eastern/EProducte1.png', './Fotos/Eastern/EProducte2.png', './Fotos/Eastern/EProducte3.jpg', './Fotos/Eastern/EProducte4.jpg',
+      './Fotos/Eastern/EProducte5.jpg'
+    ]
+  },
+  tekor: {
+    Edifici: [
+      './Fotos/Tekor/TEdifici1.jpg', './Fotos/Tekor/TEdifici2.jpg', './Fotos/Tekor/TEdifici3.jpg', './Fotos/Tekor/TEdifici4.jpg',
+      './Fotos/Tekor/TEdifici5.DNG', './Fotos/Tekor/TEdifici6.jpg', './Fotos/Tekor/TEdifici7.jpg', './Fotos/Tekor/TEdifici8.jpg'
+    ],
+    Instalacions: [
+      './Fotos/Tekor/TInstalacions1.jpg', './Fotos/Tekor/TInstalacions2.jpg', './Fotos/Tekor/TInstalacions3.jpg', './Fotos/Tekor/TInstalacions4.jpg',
+      './Fotos/Tekor/TInstalacions5.jpg', './Fotos/Tekor/TInstalacions6.jpg', './Fotos/Tekor/TInstalacions7.jpg', './Fotos/Tekor/TInstalacions8.jpg',
+      './Fotos/Tekor/TInstalacions9.jpg', './Fotos/Tekor/TInstalacions10.jpg', './Fotos/Tekor/TInstalacions11.jpg', './Fotos/Tekor/TInstalacions12.jpg',
+      './Fotos/Tekor/TInstalacions13.jpg', './Fotos/Tekor/TInstalacions14.jpg', './Fotos/Tekor/TInstalacions15.jpg', './Fotos/Tekor/TInstalacions16.jpg',
+      './Fotos/Tekor/TInstalacions17.jpg', './Fotos/Tekor/TInstalacions18.jpg', './Fotos/Tekor/TInstalacions19.jpg'
+    ],
+    Producte: [
+      './Fotos/Tekor/TProducte1.jpg', './Fotos/Tekor/TProducte2.jpg', './Fotos/Tekor/TProducte3.jpg', './Fotos/Tekor/TProducte4.jpg',
+      './Fotos/Tekor/TProducte5.jpg', './Fotos/Tekor/TProducte6.jpg'
+    ]
+  }
+};
+
+function createDarkPlaceholderTexture() {
+  const c = document.createElement('canvas');
+  c.width = 128; c.height = 128;
+  const ctx = c.getContext('2d');
+  ctx.fillStyle = '#0a0a0d';
+  ctx.fillRect(0, 0, 128, 128);
+  ctx.strokeStyle = 'rgba(244, 162, 97, 0.3)';
+  ctx.lineWidth = 4;
+  ctx.strokeRect(4, 4, 120, 120);
+  const tex = new THREE.CanvasTexture(c);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  return tex;
+}
+
+const defaultPlaceholderTex = createDarkPlaceholderTexture();
+
+function loadFastTexture(url) {
+  if (textureCache.has(url)) {
+    return Promise.resolve(textureCache.get(url));
+  }
+
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.decoding = 'async';
+    
+    img.onload = () => {
+      const tex = new THREE.Texture(img);
+      tex.colorSpace = THREE.SRGBColorSpace;
+      tex.generateMipmaps = false;
+      tex.minFilter = THREE.LinearFilter;
+      tex.magFilter = THREE.LinearFilter;
+      tex.needsUpdate = true;
+      
+      const aspect = (img.naturalWidth && img.naturalHeight) ? (img.naturalHeight / img.naturalWidth) : 0.75;
+      const result = { texture: tex, aspect };
+      textureCache.set(url, result);
+      resolve(result);
+    };
+
+    img.onerror = () => {
+      resolve({ texture: defaultPlaceholderTex, aspect: 0.75 });
+    };
+
+    img.src = url;
+  });
+}
+
+function clearGroup(g) {
+  while (g.children.length) {
+    const c = g.children[0];
+    g.remove(c);
+    c.geometry?.dispose();
+    if (c.material) {
+      const mats = Array.isArray(c.material) ? c.material : [c.material];
+      mats.forEach(m => {
+        if (m.map && m.map !== defaultPlaceholderTex) m.map.dispose();
+        m.dispose();
+      });
+    }
+  }
+}
+
+function createDarkGlowTexture(text) {
+  const c = document.createElement('canvas');
+  c.width = 512;
+  c.height = 256;
+  const ctx = c.getContext('2d');
+
+  ctx.clearRect(0, 0, c.width, c.height);
+
+  const margin = 24;
+  const x = margin;
+  const y = margin;
+  const w = c.width - margin * 2;
+  const h = c.height - margin * 2;
+  const radius = 20;
+
+  ctx.save();
+  ctx.shadowColor = 'rgba(244, 162, 97, 0.5)';
+  ctx.shadowBlur = 20;
+  ctx.fillStyle = '#0a0a0d';
+  ctx.beginPath();
+  ctx.roundRect(x, y, w, h, radius);
+  ctx.fill();
+  ctx.restore();
+
+  const grad = ctx.createLinearGradient(x, y, x, y + h);
+  grad.addColorStop(0, '#121216');
+  grad.addColorStop(0.5, '#070709');
+  grad.addColorStop(1, '#020203');
+
+  ctx.fillStyle = grad;
+  ctx.beginPath();
+  ctx.roundRect(x, y, w, h, radius);
+  ctx.fill();
+
+  ctx.strokeStyle = 'rgba(244, 162, 97, 0.8)';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.roundRect(x, y, w, h, radius);
+  ctx.stroke();
+
+  ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(x + radius, y + 2);
+  ctx.lineTo(x + w - radius, y + 2);
+  ctx.stroke();
+
+  ctx.fillStyle = '#ffffff';
+  ctx.font = 'bold 36px Arial, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.shadowColor = 'rgba(0, 0, 0, 0.9)';
+  ctx.shadowBlur = 8;
+  ctx.fillText(text, c.width / 2, c.height / 2);
+
+  const tex = new THREE.CanvasTexture(c);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  tex.generateMipmaps = false;
+  tex.minFilter = THREE.LinearFilter;
+  return tex;
+}
+
+const mainHubGroup = new THREE.Group();
+scene.add(mainHubGroup);
+
+function recenterMainHubAroundUser() {
+  camera.getWorldPosition(_cam);
+  camera.getWorldDirection(_fwd);
+  _fwd.y = 0;
+  _fwd.normalize();
+
+  mainHubGroup.position.set(_cam.x, 0, _cam.z);
+  
+  if (_fwd.lengthSq() > 0) {
+    const angle = Math.atan2(_fwd.x, _fwd.z);
+    mainHubGroup.rotation.y = angle - Math.PI;
+  }
+}
+
+const mainPanels = [];
+const MAIN_RADIUS = 2.8;
+const IMAGE_Y = 1.2;
+
+function createMainHubPanels() {
+  clearGroup(mainHubGroup);
+  mainPanels.length = 0;
+
+  for (let i = 0; i < hubItems.length; i++) {
+    const angle = (i / hubItems.length) * Math.PI * 2;
+    const x = Math.sin(angle) * MAIN_RADIUS;
+    const z = -Math.cos(angle) * MAIN_RADIUS;
+    const item = hubItems[i];
+
+    const mat = new THREE.MeshBasicMaterial({ 
+      map: defaultPlaceholderTex,
+      transparent: true, 
+      side: THREE.DoubleSide
+    });
+
+    const mesh = new THREE.Mesh(new THREE.PlaneGeometry(0.9, 0.9), mat);
+    mesh.position.set(x, IMAGE_Y, z);
+    mesh.lookAt(0, IMAGE_Y, 0);
+    mainHubGroup.add(mesh);
+
+    loadFastTexture(item.img).then(({ texture, aspect }) => {
+      mesh.material.map = texture;
+      mesh.material.needsUpdate = true;
+      const w = 0.9;
+      const h = w * aspect;
+      mesh.geometry.dispose();
+      mesh.geometry = new THREE.PlaneGeometry(w, h);
+    });
+
+    mainPanels.push({ mesh, item, index: i, prog: 0 });
+  }
+}
+
+createMainHubPanels();
+
+const roomGroup = new THREE.Group();
+roomGroup.visible = false;
+scene.add(roomGroup);
+
+const carouselGroup = new THREE.Group();
+carouselGroup.visible = false;
+scene.add(carouselGroup);
+
+let carouselItems = [];
+const CAROUSEL_RADIUS = 3.2;
+
+function buildThemeRoom(companyId) {
+  currentSelectedCompany = companyId;
+  clearGroup(roomGroup);
+  closeCarousel();
+  roomLabels.length = 0; 
+
+  camera.getWorldPosition(_cam);
+  camera.getWorldDirection(_fwd);
+  _fwd.y = 0;
+  _fwd.normalize();
+
+  roomGroup.position.set(_cam.x, 0, _cam.z);
+
+  if (_fwd.lengthSq() > 0) {
+    const lookAngle = Math.atan2(_fwd.x, _fwd.z);
+    roomGroup.rotation.y = lookAngle - Math.PI;
+  } else {
+    roomGroup.rotation.y = 0;
+  }
+
+  const categoryConfig = [
+    { key: 'Producte', angle: 0 },
+    { key: 'Edifici', angle: -Math.PI / 3 },
+    { key: 'Instalacions', angle: Math.PI / 3 }
+  ];
+
+  const RL_RADIUS = 2.5;
+  const RL_Y = 1.2;
+
+  for (let i = 0; i < categoryConfig.length; i++) {
+    const config = categoryConfig[i];
+    const lx = Math.sin(config.angle) * RL_RADIUS;
+    const lz = -Math.cos(config.angle) * RL_RADIUS;
+
+    const ltex = createDarkGlowTexture(config.key);
+    const lmat = new THREE.MeshBasicMaterial({ 
+      map: ltex, 
+      transparent: true, 
+      side: THREE.DoubleSide,
+      opacity: 0.85
+    });
+
+    const lmesh = new THREE.Mesh(new THREE.PlaneGeometry(1.4, 0.7), lmat);
+    lmesh.position.set(lx, RL_Y, lz);
+    lmesh.lookAt(0, RL_Y, 0);
+    
+    roomGroup.add(lmesh);
+    roomLabels.push({ mesh: lmesh, index: i, categoryKey: config.key, prog: 0 });
+  }
+
+  mainHubGroup.visible = false;
+  roomGroup.visible = true;
+  state = 'themeRoom';
+}
+
+function openCarouselCategory(categoryKey) {
+  clearGroup(carouselGroup);
+  carouselItems = [];
+  carouselGroup.rotation.y = 0; 
+
+  const companyData = companyGalleries[currentSelectedCompany];
+  const imageList = (companyData && companyData[categoryKey]) ? companyData[categoryKey] : [];
+  
+  if (imageList.length === 0) return;
+
+  camera.getWorldPosition(_cam);
+  carouselGroup.position.set(_cam.x, 0, _cam.z);
+
+  const count = imageList.length;
+
+  for (let i = 0; i < count; i++) {
+    const angle = (i / count) * Math.PI * 2;
+    const basePos = new THREE.Vector3(
+      Math.sin(angle) * CAROUSEL_RADIUS,
+      1.2,
+      -Math.cos(angle) * CAROUSEL_RADIUS
+    );
+
+    const mat = new THREE.MeshBasicMaterial({ 
+      map: defaultPlaceholderTex,
+      side: THREE.DoubleSide, 
+      transparent: true,
+      opacity: 0.95
+    });
+
+    const mesh = new THREE.Mesh(new THREE.PlaneGeometry(1.2, 0.9), mat);
+    mesh.position.copy(basePos);
+    mesh.lookAt(0, 1.2, 0);
+    carouselGroup.add(mesh);
+
+    loadFastTexture(imageList[i]).then(({ texture, aspect }) => {
+      mesh.material.map = texture;
+      mesh.material.needsUpdate = true;
+      const w = 1.2;
+      const h = w * aspect;
+      mesh.geometry.dispose();
+      mesh.geometry = new THREE.PlaneGeometry(w, h);
+    });
+
+    carouselItems.push({
+      mesh,
+      basePos: basePos.clone(),
+      prog: 0
+    });
+  }
+
+  roomGroup.visible = false;
+  carouselGroup.visible = true;
+  state = 'carousel';
+}
+
+function closeCarousel() {
+  clearGroup(carouselGroup);
+  carouselGroup.visible = false;
+  carouselItems = [];
+  if (state === 'carousel') {
+    roomGroup.visible = true;
+    state = 'themeRoom';
+  }
+}
+
+function exitToMainHub() {
+  closeCarousel();
+  clearGroup(roomGroup);
+  roomGroup.visible = false;
+  mainHubGroup.visible = true;
+  currentSelectedCompany = null;
+  state = 'mainHub';
+}
+
+function getLookedMainPanel() {
+  camera.getWorldDirection(_fwd);
+  camera.getWorldPosition(_cam);
+  let best = -1, bestDot = 0.72;
+  
+  for (let i = 0; i < mainPanels.length; i++) {
+    if (!mainPanels[i].mesh.visible) continue;
+    mainPanels[i].mesh.getWorldPosition(_itemWorldPos);
+    _to.copy(_itemWorldPos).sub(_cam).normalize();
+    const d = _fwd.dot(_to);
+    if (d > bestDot) { bestDot = d; best = i; }
+  }
+  return best;
+}
+
+function getLookedRoomLabel() {
+  camera.getWorldDirection(_fwd);
+  camera.getWorldPosition(_cam);
+  let best = -1, bestDot = 0.7;
+  
+  for (let i = 0; i < roomLabels.length; i++) {
+    roomLabels[i].mesh.getWorldPosition(_itemWorldPos);
+    _to.copy(_itemWorldPos).sub(_cam).normalize();
+    const d = _fwd.dot(_to);
+    if (d > bestDot) { bestDot = d; best = i; }
+  }
+  return best;
+}
+
+function getLookedCarouselItem() {
+  camera.getWorldDirection(_fwd);
+  camera.getWorldPosition(_cam);
+  let best = -1, bestDot = 0.8;
+  
+  for (let i = 0; i < carouselItems.length; i++) {
+    carouselItems[i].mesh.getWorldPosition(_itemWorldPos);
+    _to.copy(_itemWorldPos).sub(_cam).normalize();
+    const d = _fwd.dot(_to);
+    if (d > bestDot) { bestDot = d; best = i; }
+  }
+  return best;
+}
+
+// ─── GESTIÓ DEL WEBXR I ESTAT DE CÀRREGA ───────────────────────────────
+const statusEl = document.getElementById('status');
+
+if (navigator.xr) {
+  navigator.xr.isSessionSupported('immersive-ar').then(supported => {
+    if (supported) {
+      statusEl.textContent = 'Llest! Prem el botó "START AR" per començar.';
+      document.body.appendChild(ARButton.createButton(renderer, { optionalFeatures: ['local-floor', 'bounded-floor'] }));
+    } else {
+      statusEl.textContent = 'Mode AR no disponible en aquest dispositiu.';
+    }
+  }).catch(() => {
+    statusEl.textContent = 'Llest! (Mode estàndard actiu)';
+  });
+} else {
+  statusEl.textContent = 'WebXR no compatible en aquest navegador.';
+  // Fallback de seguretat perquè mai es quedi penjat
+  const fallbackBtn = document.createElement('button');
+  fallbackBtn.textContent = 'ENTRAR (Mòdul web)';
+  fallbackBtn.id = 'ARButton';
+  fallbackBtn.onclick = () => { document.getElementById('overlay').style.display = 'none'; };
+  document.body.appendChild(fallbackBtn);
+}
+
+// Timeout de seguretat: si en 2 segons no canvia l'estat, el força a "Llest"
+setTimeout(() => {
+  if (statusEl.textContent.includes('Iniciant')) {
+    statusEl.textContent = 'Llest! Entorn preparat.';
+  }
+}, 2000);
+
+const infoEl = document.getElementById('controllerInfo');
+
+function handleInput(delta, frame) {
+  const session = renderer.xr.getSession(); if (!session) return;
+  const refSpace = renderer.xr.getReferenceSpace(); let anyController = false;
+
+  for (const src of session.inputSources) {
+    if (!src.gamepad) continue;
+    if (frame && refSpace) {
+      const space = src.gripSpace || src.targetRaySpace;
+      if (space) {
+        const pose = frame.getPose(space, refSpace);
+        if (pose) { anyController = true; }
+      }
+    }
+    if (src.handedness !== 'right') continue;
+    const gp = src.gamepad; 
+    const aPressed = gp.buttons[4]?.pressed; 
+    const bPressed = gp.buttons[5]?.pressed;
+
+    const axisX = gp.axes[2] !== undefined ? gp.axes[2] : gp.axes[0];
+    if (axisX !== undefined) {
+      const deadzone = 0.15;
+      if (Math.abs(axisX) > deadzone) {
+        const sign = Math.sign(axisX);
+        const normalizedInput = (Math.abs(axisX) - deadzone) / (1.0 - deadzone);
+        const maxTurnSpeed = 1.5; 
+
+        if (state === 'carousel' && carouselGroup.visible) {
+          carouselGroup.rotation.y -= sign * normalizedInput * maxTurnSpeed * delta;
+        } else {
+          cameraGroup.rotation.y -= sign * normalizedInput * maxTurnSpeed * delta;
+        }
+      }
+    }
+
+    if (aPressed && !buttonStates.a) {
+      if (state === 'mainHub') {
+        const idx = getLookedMainPanel();
+        if (idx !== -1) {
+          buildThemeRoom(hubItems[idx].id);
+        }
+      } else if (state === 'themeRoom') {
+        const ridx = getLookedRoomLabel();
+        if (ridx !== -1) {
+          openCarouselCategory(roomLabels[ridx].categoryKey);
+        }
+      }
+    }
+
+    if (bPressed && !buttonStates.b) {
+      if (state === 'carousel') {
+        closeCarousel();
+      } else if (state === 'themeRoom') {
+        exitToMainHub();
+      }
+    }
+
+    buttonStates.a = aPressed; 
+    buttonStates.b = bPressed;
+  }
+  if(infoEl) infoEl.textContent = anyController ? 'Mandos actius' : 'Mandos: buscant...';
+}
+
+let lastClockTime = performance.now();
+
+function animate(time, frame) {
+  const now = performance.now();
+  const delta = Math.min((now - lastClockTime) / 1000, 0.1); 
+  lastClockTime = now;
+
+  if (pendingHubRecenter && renderer.xr.getSession() && frame) { 
+    recenterVR(); 
+    pendingHubRecenter = false; 
+  }
+
+  camera.getWorldPosition(_camPos2D);
+
+  if (state === 'mainHub') {
+    const looked = getLookedMainPanel();
+    for (let i = 0; i < mainPanels.length; i++) {
+      const p = mainPanels[i];
+      if (!p.mesh.visible) continue;
+      const target = (i === looked) ? 1 : 0;
+      p.prog += (target - p.prog) * 0.12;
+      p.mesh.scale.setScalar(1 + 0.18 * p.prog);
+      const camPos3 = new THREE.Vector3(); 
+      camera.getWorldPosition(camPos3); 
+      p.mesh.lookAt(camPos3.x, camPos3.y - 0.1, camPos3.z);
+    }
+  } else if (state === 'themeRoom') {
+    const looked = getLookedRoomLabel();
+    for (let i = 0; i < roomLabels.length; i++) {
+      const r = roomLabels[i]; 
+      const target = (i === looked) ? 1 : 0; 
+      r.prog += (target - r.prog) * 0.12;
+      r.mesh.scale.setScalar(1 + 0.25 * r.prog);
+      r.mesh.material.opacity = 0.75 + 0.25 * r.prog;
+      r.mesh.lookAt(_camPos2D.x, r.mesh.position.y, _camPos2D.z);
+    }
+  } else if (state === 'carousel' && carouselGroup.visible) {
+    const lookedIdx = getLookedCarouselItem();
+    for (let i = 0; i < carouselItems.length; i++) {
+      const item = carouselItems[i];
+      const target = (i === lookedIdx) ? 1 : 0;
+      
+      item.prog += (target - item.prog) * 0.12;
+      item.mesh.scale.setScalar(1 + 0.25 * item.prog);
+
+      const moveDir = item.basePos.clone().normalize();
+      const targetPos = item.basePos.clone().sub(moveDir.multiplyScalar(0.6 * item.prog));
+      item.mesh.position.copy(targetPos);
+    }
+  }
+
+  handleInput(delta, frame);
+  renderer.render(scene, camera);
+}
+
+renderer.setAnimationLoop((time, frame) => { animate(time, frame); });
+
+window.addEventListener('resize', () => {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+});
+</script>
+</body>
+</html>
