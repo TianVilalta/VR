@@ -36,7 +36,6 @@
     z-index: 10;
     border: 1px solid rgba(255,255,255,0.1);
   }
-  /* Estil personalitzat pel botó d'AR de Three.js */
   #ARButton {
     position: absolute !important;
     bottom: 20px !important;
@@ -192,17 +191,24 @@ scene.add(dirLight2);
 const ambient = new THREE.AmbientLight(0xffffff, 0.5);
 scene.add(ambient);
 
-// ─── DADES DE LES SECCIONS I IMATGES ───────────
 const hubItems = [
   { label: 'Amèrica', img: './Fotos/logos/america.png', id: 'america' },
   { label: 'Pedro', img: './Fotos/logos/pedro.png', id: 'pedro' },
   { label: 'Eastern', img: './Fotos/logos/eastern.png', id: 'eastern' },
   { label: 'Dinacil', img: './Fotos/logos/dinacil.png', id: 'dinacil' },
   { label: 'Fundiciones', img: './Fotos/logos/fundiciones.png', id: 'fundiciones' },
-  { label: 'Tekor', img: './Fotos/logos/tekor.png', id: 'tekor' }
+  { label: 'Tekor', img: './Fotos/logos/tekor.png', id: 'tekor' },
+  { label: 'Roquet', img: './Fotos/logos/roquet.png', id: 'roquet' }
 ];
 
 const companyGalleries = {
+  roquet: {
+    Timeline: [
+      './Fotos/Roquet/1.png', './Fotos/Roquet/2.png', './Fotos/Roquet/3.png', './Fotos/Roquet/4.png',
+      './Fotos/Roquet/5.png', './Fotos/Roquet/6.png', './Fotos/Roquet/7.png', './Fotos/Roquet/8.png',
+      './Fotos/Roquet/9.png', './Fotos/Roquet/10.png'
+    ]
+  },
   dinacil: {
     Edifici: [
       './Fotos/Dinacil/DEdifici1.jpg', './Fotos/Dinacil/DEdifici2.jpg', './Fotos/Dinacil/DEdifici3.jpg', './Fotos/Dinacil/DEdifici4.JPG',
@@ -521,6 +527,11 @@ function buildThemeRoom(companyId) {
     roomGroup.rotation.y = 0;
   }
 
+  if (companyId === 'roquet') {
+    openCarouselCategory('Timeline');
+    return;
+  }
+
   const categoryConfig = [
     { key: 'Producte', angle: 0 },
     { key: 'Edifici', angle: -Math.PI / 3 },
@@ -663,7 +674,7 @@ function getLookedRoomLabel() {
 function getLookedCarouselItem() {
   camera.getWorldDirection(_fwd);
   camera.getWorldPosition(_cam);
-  let best = -1, bestDot = 0.8;
+  let best = -1, bestDot = 0.75;
   
   for (let i = 0; i < carouselItems.length; i++) {
     carouselItems[i].mesh.getWorldPosition(_itemWorldPos);
@@ -674,7 +685,6 @@ function getLookedCarouselItem() {
   return best;
 }
 
-// ─── GESTIÓ DEL WEBXR I ESTAT DE CÀRREGA ───────────────────────────────
 const statusEl = document.getElementById('status');
 
 if (navigator.xr) {
@@ -690,7 +700,6 @@ if (navigator.xr) {
   });
 } else {
   statusEl.textContent = 'WebXR no compatible en aquest navegador.';
-  // Fallback de seguretat perquè mai es quedi penjat
   const fallbackBtn = document.createElement('button');
   fallbackBtn.textContent = 'ENTRAR (Mòdul web)';
   fallbackBtn.id = 'ARButton';
@@ -698,7 +707,6 @@ if (navigator.xr) {
   document.body.appendChild(fallbackBtn);
 }
 
-// Timeout de seguretat: si en 2 segons no canvia l'estat, el força a "Llest"
 setTimeout(() => {
   if (statusEl.textContent.includes('Iniciant')) {
     statusEl.textContent = 'Llest! Entorn preparat.';
@@ -757,7 +765,11 @@ function handleInput(delta, frame) {
 
     if (bPressed && !buttonStates.b) {
       if (state === 'carousel') {
-        closeCarousel();
+        if (currentSelectedCompany === 'roquet') {
+          exitToMainHub();
+        } else {
+          closeCarousel();
+        }
       } else if (state === 'themeRoom') {
         exitToMainHub();
       }
@@ -812,10 +824,12 @@ function animate(time, frame) {
       const target = (i === lookedIdx) ? 1 : 0;
       
       item.prog += (target - item.prog) * 0.12;
-      item.mesh.scale.setScalar(1 + 0.25 * item.prog);
+      
+      // Ampliació notable i desplaçament d'acostament quan es mira directament
+      item.mesh.scale.setScalar(1 + 0.65 * item.prog);
 
       const moveDir = item.basePos.clone().normalize();
-      const targetPos = item.basePos.clone().sub(moveDir.multiplyScalar(0.6 * item.prog));
+      const targetPos = item.basePos.clone().sub(moveDir.multiplyScalar(1.0 * item.prog));
       item.mesh.position.copy(targetPos);
     }
   }
