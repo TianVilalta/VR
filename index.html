@@ -87,7 +87,6 @@ const _to  = new THREE.Vector3();
 const _camPos2D = new THREE.Vector3();
 const _itemWorldPos = new THREE.Vector3();
 
-// Variables d'hysterèsis per evitar parpellejos de selecció
 let lastLookedMain = -1;
 let lastLookedRoom = -1;
 let lastLookedCarousel = -1;
@@ -214,6 +213,14 @@ const companyGalleries = {
       './Fotos/Roquet/9.png', './Fotos/Roquet/10.png'
     ]
   },
+  america: {
+    Galeria: [
+      './Fotos/America/A1.jpeg', './Fotos/America/A2.jpeg', './Fotos/America/A3.jpeg', './Fotos/America/A4.jpeg',
+      './Fotos/America/A5.jpeg', './Fotos/America/A6.jpg', './Fotos/America/A7.JPG', './Fotos/America/A8.JPG',
+      './Fotos/America/A9.JPG', './Fotos/America/A10.JPG', './Fotos/America/A11.JPG', './Fotos/America/A12.JPG',
+      './Fotos/America/A13.JPG', './Fotos/America/A14.png'
+    ]
+  },
   dinacil: {
     Edifici: [
       './Fotos/Dinacil/DEdifici1.jpg', './Fotos/Dinacil/DEdifici2.jpg', './Fotos/Dinacil/DEdifici3.jpg', './Fotos/Dinacil/DEdifici4.JPG',
@@ -272,16 +279,6 @@ const companyGalleries = {
       './Fotos/Pedro/PProducte13.jpg', './Fotos/Pedro/PProducte14.jpg', './Fotos/Pedro/PProducte15.jpg', './Fotos/Pedro/PProducte16.jpg',
       './Fotos/Pedro/PProducte17.jpg'
     ]
-  },
-  america: {
-    Edifici: [
-      './Fotos/America/A1.jpeg', './Fotos/America/A2.jpeg', './Fotos/America/A3.jpeg', './Fotos/America/A4.jpeg',
-      './Fotos/America/A5.jpeg', './Fotos/America/A6.jpg', './Fotos/America/A7.JPG', './Fotos/America/A8.JPG',
-      './Fotos/America/A9.JPG', './Fotos/America/A10.JPG', './Fotos/America/A11.JPG', './Fotos/America/A12.JPG',
-      './Fotos/America/A13.JPG', './Fotos/America/A14.png'
-    ],
-    Instalacions: ['./Fotos/America/A1.jpeg'],
-    Producte: ['./Fotos/America/A2.jpeg']
   },
   eastern: {
     Edifici: [
@@ -532,11 +529,13 @@ function buildThemeRoom(companyId) {
     roomGroup.rotation.y = 0;
   }
 
-  // Ocultar sempre el hub principal en entrar a qualsevol sala
   mainHubGroup.visible = false;
 
-  if (companyId === 'roquet') {
-    openCarouselCategory('Timeline');
+  // Si l'empresa només té una galeria directa (com Roquet o Amèrica), obre directament el carrusel
+  const companyData = companyGalleries[companyId];
+  if (companyId === 'roquet' || (companyData && companyData.Galeria)) {
+    const key = companyId === 'roquet' ? 'Timeline' : 'Galeria';
+    openCarouselCategory(key);
     return;
   }
 
@@ -579,7 +578,6 @@ function openCarouselCategory(categoryKey) {
   carouselItems = [];
   carouselGroup.rotation.y = 0; 
 
-  // Assegurar que tot allò anterior queda ocult
   mainHubGroup.visible = false;
   roomGroup.visible = false;
 
@@ -639,8 +637,13 @@ function closeCarousel() {
   carouselItems = [];
   lastLookedCarousel = -1;
   if (state === 'carousel') {
-    roomGroup.visible = true;
-    state = 'themeRoom';
+    const companyData = companyGalleries[currentSelectedCompany];
+    if (currentSelectedCompany === 'roquet' || (companyData && companyData.Galeria)) {
+      exitToMainHub();
+    } else {
+      roomGroup.visible = true;
+      state = 'themeRoom';
+    }
   }
 }
 
@@ -656,7 +659,6 @@ function exitToMainHub() {
   lastLookedCarousel = -1;
 }
 
-// ─── FUNCIONS DE SELECCIÓ AMB HYSTERÈSIS (ELIMINA PARPELLEJOS) ─────────
 function getLookedMainPanel() {
   camera.getWorldDirection(_fwd);
   camera.getWorldPosition(_cam);
@@ -667,7 +669,7 @@ function getLookedMainPanel() {
     mainPanels[i].mesh.getWorldPosition(_itemWorldPos);
     _to.copy(_itemWorldPos).sub(_cam).normalize();
     let d = _fwd.dot(_to);
-    if (i === lastLookedMain) d += 0.04; // Hysterèsis
+    if (i === lastLookedMain) d += 0.04;
     if (d > bestDot) { bestDot = d; best = i; }
   }
   lastLookedMain = best;
@@ -683,7 +685,7 @@ function getLookedRoomLabel() {
     roomLabels[i].mesh.getWorldPosition(_itemWorldPos);
     _to.copy(_itemWorldPos).sub(_cam).normalize();
     let d = _fwd.dot(_to);
-    if (i === lastLookedRoom) d += 0.04; // Hysterèsis
+    if (i === lastLookedRoom) d += 0.04;
     if (d > bestDot) { bestDot = d; best = i; }
   }
   lastLookedRoom = best;
@@ -699,7 +701,7 @@ function getLookedCarouselItem() {
     carouselItems[i].mesh.getWorldPosition(_itemWorldPos);
     _to.copy(_itemWorldPos).sub(_cam).normalize();
     let d = _fwd.dot(_to);
-    if (i === lastLookedCarousel) d += 0.06; // Hysterèsis forta per evitar parpellejos entre imatges veïnes
+    if (i === lastLookedCarousel) d += 0.06;
     if (d > bestDot) { bestDot = d; best = i; }
   }
   lastLookedCarousel = best;
@@ -786,7 +788,8 @@ function handleInput(delta, frame) {
 
     if (bPressed && !buttonStates.b) {
       if (state === 'carousel') {
-        if (currentSelectedCompany === 'roquet') {
+        const companyData = companyGalleries[currentSelectedCompany];
+        if (currentSelectedCompany === 'roquet' || (companyData && companyData.Galeria)) {
           exitToMainHub();
         } else {
           closeCarousel();
