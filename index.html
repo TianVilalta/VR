@@ -78,7 +78,7 @@ import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 let state = 'mainHub';  
 let currentSelectedCompany = null; 
 
-const buttonStates = {};
+const buttonStates = { left: {}, right: {} };
 const roomLabels = [];
 
 const _fwd = new THREE.Vector3();
@@ -531,7 +531,6 @@ function buildThemeRoom(companyId) {
 
   mainHubGroup.visible = false;
 
-  // Si l'empresa només té una galeria directa (com Roquet o Amèrica), obre directament el carrusel
   const companyData = companyGalleries[companyId];
   if (companyId === 'roquet' || (companyData && companyData.Galeria)) {
     const key = companyId === 'roquet' ? 'Timeline' : 'Galeria';
@@ -751,10 +750,14 @@ function handleInput(delta, frame) {
         if (pose) { anyController = true; }
       }
     }
-    if (src.handedness !== 'right') continue;
+
+    const handedness = src.handedness; // 'left' o 'right'
+    if (handedness !== 'left' && handedness !== 'right') continue;
+
     const gp = src.gamepad; 
-    const aPressed = gp.buttons[4]?.pressed; 
-    const bPressed = gp.buttons[5]?.pressed;
+    // A/X (botó 4 o similar segons mapeig Quest) i B/Y (botó 5)
+    const selectPressed = gp.buttons[4]?.pressed || gp.buttons[0]?.pressed; 
+    const backPressed = gp.buttons[5]?.pressed || gp.buttons[1]?.pressed;
 
     const axisX = gp.axes[2] !== undefined ? gp.axes[2] : gp.axes[0];
     if (axisX !== undefined) {
@@ -772,7 +775,9 @@ function handleInput(delta, frame) {
       }
     }
 
-    if (aPressed && !buttonStates.a) {
+    const bState = buttonStates[handedness];
+
+    if (selectPressed && !bState.select) {
       if (state === 'mainHub') {
         const idx = getLookedMainPanel();
         if (idx !== -1) {
@@ -786,7 +791,7 @@ function handleInput(delta, frame) {
       }
     }
 
-    if (bPressed && !buttonStates.b) {
+    if (backPressed && !bState.back) {
       if (state === 'carousel') {
         const companyData = companyGalleries[currentSelectedCompany];
         if (currentSelectedCompany === 'roquet' || (companyData && companyData.Galeria)) {
@@ -799,8 +804,8 @@ function handleInput(delta, frame) {
       }
     }
 
-    buttonStates.a = aPressed; 
-    buttonStates.b = bPressed;
+    bState.select = selectPressed; 
+    bState.back = backPressed;
   }
   if(infoEl) infoEl.textContent = anyController ? 'Mandos actius' : 'Mandos: buscant...';
 }
