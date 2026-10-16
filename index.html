@@ -524,12 +524,30 @@ scene.add(carouselGroup);
 let carouselItems = [];
 const CAROUSEL_RADIUS = 3.2;
 
+// ─── CREACIÓ D'UN BOTÓ FLOTANT VIRTUAL EN L'ESPAI 3D (PER TORNAR ENRERE FÀCILMENT) ───
+const virtualBackGroup = new THREE.Group();
+scene.add(virtualBackGroup);
+
+function createVirtualBackButton() {
+  clearGroup(virtualBackGroup);
+  const tex = createDarkGlowTexture('⬅ TORNAR ENRERE');
+  const mat = new THREE.MeshBasicMaterial({ map: tex, transparent: true, side: THREE.DoubleSide });
+  const mesh = new THREE.Mesh(new THREE.PlaneGeometry(1.6, 0.8), mat);
+  
+  // Col·locat just davant i una mica amunt en l'espai virtual
+  mesh.position.set(0, 0.3, -1.8);
+  virtualBackGroup.add(mesh);
+}
+
 function updateBackButtonVisibility() {
   const btn = document.getElementById('backButton');
   if (state === 'mainHub') {
     btn.style.display = 'none';
+    virtualBackGroup.visible = false;
   } else {
     btn.style.display = 'block';
+    createVirtualBackButton();
+    virtualBackGroup.visible = true;
   }
 }
 
@@ -750,6 +768,15 @@ function getLookedCarouselItem() {
   return best;
 }
 
+function checkLookedVirtualBack() {
+  if (state === 'mainHub') return false;
+  camera.getWorldDirection(_fwd);
+  camera.getWorldPosition(_cam);
+  const backPos = new THREE.Vector3(0, 0.3, -1.8).add(cameraGroup.position);
+  _to.copy(backPos).sub(_cam).normalize();
+  return _fwd.dot(_to) > 0.85;
+}
+
 const statusEl = document.getElementById('status');
 
 if (navigator.xr) {
@@ -800,11 +827,16 @@ function handleInput(delta, frame) {
     const gp = src.gamepad; 
     const bState = buttonStates[handedness];
 
-    // Detecció genèrica i robusta de qualsevol botó premut (evita fallades d'índex)
     let selectPressed = gp.buttons[4]?.pressed || gp.buttons[0]?.pressed || gp.buttons[3]?.pressed;
     let backPressed = gp.buttons[5]?.pressed || gp.buttons[1]?.pressed || gp.buttons[2]?.pressed;
 
-    // Fallback: si algun altre botó s'acaba de prémer
+    // Si es mira directament al botó virtual de tornar enrere, qualsevol pressió de botó serveix per tornar
+    if (checkLookedVirtualBack()) {
+      for (let i = 0; i < gp.buttons.length; i++) {
+        if (gp.buttons[i].pressed) backPressed = true;
+      }
+    }
+
     for (let i = 0; i < gp.buttons.length; i++) {
       if (gp.buttons[i].pressed && !bState.prevButtons[i]) {
         if (i === 0 || i === 4) selectPressed = true;
@@ -840,6 +872,8 @@ function handleInput(delta, frame) {
         if (ridx !== -1) {
           openCarouselCategory(roomLabels[ridx].categoryKey);
         }
+      } else if (state === 'carousel' && checkLookedVirtualBack()) {
+        triggerBackAction();
       }
     }
 
@@ -902,6 +936,12 @@ function animate(time, frame) {
       const targetPos = item.basePos.clone().sub(moveDir.multiplyScalar(1.0 * item.prog));
       item.mesh.position.copy(targetPos);
     }
+  }
+
+  // Actualitzar la posició del botó virtual de tornar enrere perquè segueixi la càmera si cal
+  if (virtualBackGroup.visible) {
+    virtualBackGroup.position.copy(cameraGroup.position);
+    virtualBackGroup.rotation.y = cameraGroup.rotation.y;
   }
 
   handleInput(delta, frame);
