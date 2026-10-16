@@ -36,20 +36,6 @@
     z-index: 10;
     border: 1px solid rgba(255,255,255,0.1);
   }
-  #backButton {
-    position: absolute;
-    top: 20px; right: 20px;
-    background-color: rgba(244, 162, 97, 0.9);
-    border: 2px solid #fff;
-    border-radius: 10px;
-    color: #000;
-    font: bold 14px 'Segoe UI', sans-serif;
-    padding: 10px 20px;
-    cursor: pointer;
-    z-index: 999;
-    display: none;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.5);
-  }
   #ARButton {
     position: absolute !important;
     bottom: 20px !important;
@@ -74,7 +60,6 @@
   <div id="status">Iniciant aplicació...</div>
 </div>
 <div id="controllerInfo">Mandos: esperant sessió AR...</div>
-<button id="backButton" onclick="triggerBackAction()">⬅ TORNAR / SORTIR</button>
 
 <script type="importmap">
 {
@@ -93,7 +78,7 @@ import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 let state = 'mainHub';  
 let currentSelectedCompany = null; 
 
-const buttonStates = { left: { prevButtons: [] }, right: { prevButtons: [] } };
+const buttonStates = {};
 const roomLabels = [];
 
 const _fwd = new THREE.Vector3();
@@ -222,7 +207,7 @@ const hubItems = [
 
 const companyGalleries = {
   roquet: {
-    Galeria: [
+    Timeline: [
       './Fotos/Roquet/1.png', './Fotos/Roquet/2.png', './Fotos/Roquet/3.png', './Fotos/Roquet/4.png',
       './Fotos/Roquet/5.png', './Fotos/Roquet/6.png', './Fotos/Roquet/7.png', './Fotos/Roquet/8.png',
       './Fotos/Roquet/9.png', './Fotos/Roquet/10.png'
@@ -524,45 +509,6 @@ scene.add(carouselGroup);
 let carouselItems = [];
 const CAROUSEL_RADIUS = 3.2;
 
-const virtualBackGroup = new THREE.Group();
-scene.add(virtualBackGroup);
-
-function createVirtualBackButton() {
-  clearGroup(virtualBackGroup);
-  const tex = createDarkGlowTexture('⬅ TORNAR ENRERE');
-  const mat = new THREE.MeshBasicMaterial({ map: tex, transparent: true, side: THREE.DoubleSide });
-  const mesh = new THREE.Mesh(new THREE.PlaneGeometry(1.6, 0.8), mat);
-  mesh.position.set(0, 0.3, -1.8);
-  virtualBackGroup.add(mesh);
-}
-
-function updateBackButtonVisibility() {
-  const btn = document.getElementById('backButton');
-  if (state === 'mainHub') {
-    btn.style.display = 'none';
-    virtualBackGroup.visible = false;
-  } else {
-    btn.style.display = 'block';
-    createVirtualBackButton();
-    virtualBackGroup.visible = true;
-  }
-}
-
-// Retrocés unificat
-window.triggerBackAction = function() {
-  const isDirectRoom = currentSelectedCompany === 'roquet' || currentSelectedCompany === 'america';
-  if (state === 'carousel') {
-    if (isDirectRoom) {
-      exitToMainHub();
-    } else {
-      closeCarousel();
-    }
-  } else if (state === 'themeRoom') {
-    exitToMainHub();
-  }
-  updateBackButtonVisibility();
-};
-
 function buildThemeRoom(companyId) {
   currentSelectedCompany = companyId;
   clearGroup(roomGroup);
@@ -585,9 +531,10 @@ function buildThemeRoom(companyId) {
 
   mainHubGroup.visible = false;
 
-  // Si és Roquet o Amèrica (galeria única), obrim directament el carrusel
+  // Si l'empresa és Roquet o Amèrica, obre directament el carrusel sense sala de categories
   if (companyId === 'roquet' || companyId === 'america') {
-    openCarouselCategory('Galeria');
+    const key = companyId === 'roquet' ? 'Timeline' : 'Galeria';
+    openCarouselCategory(key);
     return;
   }
 
@@ -623,7 +570,6 @@ function buildThemeRoom(companyId) {
 
   roomGroup.visible = true;
   state = 'themeRoom';
-  updateBackButtonVisibility();
 }
 
 function openCarouselCategory(categoryKey) {
@@ -682,7 +628,6 @@ function openCarouselCategory(categoryKey) {
 
   carouselGroup.visible = true;
   state = 'carousel';
-  updateBackButtonVisibility();
 }
 
 function closeCarousel() {
@@ -690,16 +635,15 @@ function closeCarousel() {
   carouselGroup.visible = false;
   carouselItems = [];
   lastLookedCarousel = -1;
-  const isDirectRoom = currentSelectedCompany === 'roquet' || currentSelectedCompany === 'america';
   if (state === 'carousel') {
-    if (isDirectRoom) {
+    // Si estem a Roquet o Amèrica, en tancar el carrusel sortim directament al Hub principal
+    if (currentSelectedCompany === 'roquet' || currentSelectedCompany === 'america') {
       exitToMainHub();
     } else {
       roomGroup.visible = true;
       state = 'themeRoom';
     }
   }
-  updateBackButtonVisibility();
 }
 
 function exitToMainHub() {
@@ -712,7 +656,6 @@ function exitToMainHub() {
   lastLookedMain = -1;
   lastLookedRoom = -1;
   lastLookedCarousel = -1;
-  updateBackButtonVisibility();
 }
 
 function getLookedMainPanel() {
@@ -766,15 +709,6 @@ function getLookedCarouselItem() {
   return best;
 }
 
-function checkLookedVirtualBack() {
-  if (state === 'mainHub') return false;
-  camera.getWorldDirection(_fwd);
-  camera.getWorldPosition(_cam);
-  const backPos = new THREE.Vector3(0, 0.3, -1.8).add(cameraGroup.position);
-  _to.copy(backPos).sub(_cam).normalize();
-  return _fwd.dot(_to) > 0.85;
-}
-
 const statusEl = document.getElementById('status');
 
 if (navigator.xr) {
@@ -818,29 +752,10 @@ function handleInput(delta, frame) {
         if (pose) { anyController = true; }
       }
     }
-
-    const handedness = src.handedness; 
-    if (handedness !== 'left' && handedness !== 'right') continue;
-
+    if (src.handedness !== 'right') continue;
     const gp = src.gamepad; 
-    const bState = buttonStates[handedness];
-
-    let selectPressed = gp.buttons[4]?.pressed || gp.buttons[0]?.pressed || gp.buttons[3]?.pressed;
-    let backPressed = gp.buttons[5]?.pressed || gp.buttons[1]?.pressed || gp.buttons[2]?.pressed;
-
-    if (checkLookedVirtualBack()) {
-      for (let i = 0; i < gp.buttons.length; i++) {
-        if (gp.buttons[i].pressed) backPressed = true;
-      }
-    }
-
-    for (let i = 0; i < gp.buttons.length; i++) {
-      if (gp.buttons[i].pressed && !bState.prevButtons[i]) {
-        if (i === 0 || i === 4) selectPressed = true;
-        if (i === 1 || i === 5 || i === 2 || i === 3) backPressed = true;
-      }
-      bState.prevButtons[i] = gp.buttons[i].pressed;
-    }
+    const aPressed = gp.buttons[4]?.pressed; 
+    const bPressed = gp.buttons[5]?.pressed;
 
     const axisX = gp.axes[2] !== undefined ? gp.axes[2] : gp.axes[0];
     if (axisX !== undefined) {
@@ -858,7 +773,7 @@ function handleInput(delta, frame) {
       }
     }
 
-    if (selectPressed && !bState.select) {
+    if (aPressed && !buttonStates.a) {
       if (state === 'mainHub') {
         const idx = getLookedMainPanel();
         if (idx !== -1) {
@@ -869,17 +784,23 @@ function handleInput(delta, frame) {
         if (ridx !== -1) {
           openCarouselCategory(roomLabels[ridx].categoryKey);
         }
-      } else if (state === 'carousel' && checkLookedVirtualBack()) {
-        triggerBackAction();
       }
     }
 
-    if (backPressed && !bState.back) {
-      triggerBackAction();
+    if (bPressed && !buttonStates.b) {
+      if (state === 'carousel') {
+        if (currentSelectedCompany === 'roquet' || currentSelectedCompany === 'america') {
+          exitToMainHub();
+        } else {
+          closeCarousel();
+        }
+      } else if (state === 'themeRoom') {
+        exitToMainHub();
+      }
     }
 
-    bState.select = selectPressed; 
-    bState.back = backPressed;
+    buttonStates.a = aPressed; 
+    buttonStates.b = bPressed;
   }
   if(infoEl) infoEl.textContent = anyController ? 'Mandos actius' : 'Mandos: buscant...';
 }
@@ -933,11 +854,6 @@ function animate(time, frame) {
       const targetPos = item.basePos.clone().sub(moveDir.multiplyScalar(1.0 * item.prog));
       item.mesh.position.copy(targetPos);
     }
-  }
-
-  if (virtualBackGroup.visible) {
-    virtualBackGroup.position.copy(cameraGroup.position);
-    virtualBackGroup.rotation.y = cameraGroup.rotation.y;
   }
 
   handleInput(delta, frame);
