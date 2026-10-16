@@ -78,7 +78,10 @@ import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 let state = 'mainHub';  
 let currentSelectedCompany = null; 
 
-const buttonStates = {};
+const buttonStates = {
+  left: { select: false, back: false },
+  right: { select: false, back: false }
+};
 const roomLabels = [];
 
 const _fwd = new THREE.Vector3();
@@ -532,7 +535,6 @@ function buildThemeRoom(companyId) {
 
   mainHubGroup.visible = false;
 
-  // Si és Roquet o Amèrica, anem directament al carrusel sense passar per roomGroup
   if (companyId === 'roquet' || companyId === 'america') {
     const key = companyId === 'roquet' ? 'Timeline' : 'Galeria';
     openCarouselCategory(key);
@@ -752,10 +754,13 @@ function handleInput(delta, frame) {
         if (pose) { anyController = true; }
       }
     }
-    if (src.handedness !== 'right') continue;
+    
+    const handedness = src.handedness; // 'left' o 'right'
+    if (handedness !== 'left' && handedness !== 'right') continue;
+
     const gp = src.gamepad; 
-    const aPressed = gp.buttons[4]?.pressed; 
-    const bPressed = gp.buttons[5]?.pressed;
+    const aPressed = gp.buttons[4]?.pressed || gp.buttons[0]?.pressed; 
+    const bPressed = gp.buttons[5]?.pressed || gp.buttons[1]?.pressed;
 
     const axisX = gp.axes[2] !== undefined ? gp.axes[2] : gp.axes[0];
     if (axisX !== undefined) {
@@ -773,7 +778,9 @@ function handleInput(delta, frame) {
       }
     }
 
-    if (aPressed && !buttonStates.a) {
+    const bState = buttonStates[handedness];
+
+    if (aPressed && !bState.select) {
       if (state === 'mainHub') {
         const idx = getLookedMainPanel();
         if (idx !== -1) {
@@ -787,9 +794,8 @@ function handleInput(delta, frame) {
       }
     }
 
-    if (bPressed && !buttonStates.b) {
+    if (bPressed && !bState.back) {
       if (state === 'carousel') {
-        // Roquet i Amèrica tornen directament al Hub principal
         if (currentSelectedCompany === 'roquet' || currentSelectedCompany === 'america') {
           exitToMainHub();
         } else {
@@ -800,8 +806,8 @@ function handleInput(delta, frame) {
       }
     }
 
-    buttonStates.a = aPressed; 
-    buttonStates.b = bPressed;
+    bState.select = aPressed; 
+    bState.back = bPressed;
   }
   if(infoEl) infoEl.textContent = anyController ? 'Mandos actius' : 'Mandos: buscant...';
 }
