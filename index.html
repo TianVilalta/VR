@@ -512,7 +512,8 @@ const CAROUSEL_RADIUS = 3.2;
 function buildThemeRoom(companyId) {
   currentSelectedCompany = companyId;
   clearGroup(roomGroup);
-  closeCarousel();
+  clearGroup(carouselGroup);
+  carouselGroup.visible = false;
   roomLabels.length = 0; 
 
   camera.getWorldPosition(_cam);
@@ -531,7 +532,7 @@ function buildThemeRoom(companyId) {
 
   mainHubGroup.visible = false;
 
-  // Si l'empresa és Roquet o Amèrica, obre directament el carrusel sense sala de categories
+  // Si és Roquet o Amèrica, anem directament al carrusel sense passar per roomGroup
   if (companyId === 'roquet' || companyId === 'america') {
     const key = companyId === 'roquet' ? 'Timeline' : 'Galeria';
     openCarouselCategory(key);
@@ -635,24 +636,23 @@ function closeCarousel() {
   carouselGroup.visible = false;
   carouselItems = [];
   lastLookedCarousel = -1;
-  if (state === 'carousel') {
-    // Si estem a Roquet o Amèrica, en tancar el carrusel sortim directament al Hub principal
-    if (currentSelectedCompany === 'roquet' || currentSelectedCompany === 'america') {
-      exitToMainHub();
-    } else {
-      roomGroup.visible = true;
-      state = 'themeRoom';
-    }
-  }
+  roomGroup.visible = true;
+  state = 'themeRoom';
 }
 
 function exitToMainHub() {
-  closeCarousel();
+  clearGroup(carouselGroup);
+  carouselGroup.visible = false;
+  carouselItems = [];
+
   clearGroup(roomGroup);
   roomGroup.visible = false;
+  roomLabels.length = 0;
+
   mainHubGroup.visible = true;
   currentSelectedCompany = null;
   state = 'mainHub';
+
   lastLookedMain = -1;
   lastLookedRoom = -1;
   lastLookedCarousel = -1;
@@ -789,6 +789,7 @@ function handleInput(delta, frame) {
 
     if (bPressed && !buttonStates.b) {
       if (state === 'carousel') {
+        // Roquet i Amèrica tornen directament al Hub principal
         if (currentSelectedCompany === 'roquet' || currentSelectedCompany === 'america') {
           exitToMainHub();
         } else {
